@@ -118,10 +118,6 @@ namespace {
       );
     loader_->SetTimeoutDuration(base::Seconds(99));
     loader_->SetAllowHttpErrorResults(false);
-    // void (*f) (unsigned long)  = [](unsigned long i){LOG(WARNING)<<"progress "<<i;};
-    // base::RepeatingCallback<void (unsigned long)> prog{base::BindRepeating(f)};
-    // loader_->SetOnDownloadProgressCallback(prog);
-    loader_->SetOnDownloadProgressCallback([](unsigned long i){LOG(WARNING)<<"progress "<<i;});
     auto bound = base::BindOnce(&Loader::Respond, base::Unretained(this));
     loader_->DownloadToStringOfUnboundedSizeUntilCrashAndDie(lower_, std::move(bound));
   }
@@ -143,6 +139,7 @@ namespace {
     mojo::ScopedDataPipeConsumerHandle pipe_cons_ = {};
     mojo::CreateDataPipe(len, pipe_prod_, pipe_cons_);
     auto head = network::mojom::URLResponseHead::New();
+    head->charset = "utf-8";
     pipe_prod_->WriteData(html.get(), &len, MOJO_BEGIN_WRITE_DATA_FLAG_ALL_OR_NONE);
     client_->OnReceiveResponse(std::move(head), std::move(pipe_cons_), std::nullopt);
     client_->OnComplete(network::URLLoaderCompletionStatus{});
